@@ -184,3 +184,6 @@ $RECYCLE.BIN/
 *.zip
 *.tar.gz
 *.rar
+CLAUDE.md
+.api
+.mcp.json
