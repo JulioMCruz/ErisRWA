@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Send, Award, Users, Trophy } from 'lucide-react';
+import { Mail, Send, Award, Users, Trophy, CheckCircle, AlertCircle } from 'lucide-react';
+import ApiClient from '../../utils/api';
 
 const Footer: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -10,13 +11,47 @@ const Footer: React.FC = () => {
     message: ''
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Create mailto link with form data
-    const mailtoLink = `mailto:silviam@bmbweb3.com?subject=${encodeURIComponent(formData.subject)}&body=${encodeURIComponent(
-      `Name: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${formData.message}`
-    )}`;
-    window.location.href = mailtoLink;
+    
+    setIsSubmitting(true);
+    setSubmitStatus('idle');
+    setErrorMessage('');
+
+    try {
+      // Use our Resend API instead of mailto
+      await ApiClient.sendContactForm({
+        name: formData.name,
+        email: formData.email,
+        subject: formData.subject,
+        message: formData.message,
+        userType: 'general' // Footer form is for general inquiries
+      });
+
+      setSubmitStatus('success');
+      
+      // Reset form after successful submission
+      setTimeout(() => {
+        setFormData({
+          name: '',
+          email: '',
+          subject: '',
+          message: ''
+        });
+        setSubmitStatus('idle');
+      }, 3000);
+
+    } catch (error) {
+      console.error('Footer contact form error:', error);
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to send message');
+      setSubmitStatus('error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -117,6 +152,21 @@ const Footer: React.FC = () => {
               </p>
             </div>
 
+            {/* Success/Error Messages */}
+            {submitStatus === 'success' && (
+              <div className="bg-green-900/50 border border-green-600 rounded-lg p-4 flex items-center mb-4">
+                <CheckCircle className="h-5 w-5 text-green-400 mr-3 flex-shrink-0" />
+                <p className="text-green-200">Message sent successfully! We'll get back to you soon.</p>
+              </div>
+            )}
+            
+            {submitStatus === 'error' && (
+              <div className="bg-red-900/50 border border-red-600 rounded-lg p-4 flex items-center mb-4">
+                <AlertCircle className="h-5 w-5 text-red-400 mr-3 flex-shrink-0" />
+                <p className="text-red-200">{errorMessage}</p>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -185,10 +235,24 @@ const Footer: React.FC = () => {
               
               <button
                 type="submit"
-                className="w-full flex items-center justify-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                disabled={isSubmitting}
+                className={`w-full flex items-center justify-center px-6 py-3 font-semibold rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl ${
+                  isSubmitting
+                    ? 'bg-gray-600 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700'
+                }`}
               >
-                <Send className="h-5 w-5 mr-2" />
-                Send Message
+                {isSubmitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-5 w-5 mr-2" />
+                    Send Message
+                  </>
+                )}
               </button>
             </form>
           </div>

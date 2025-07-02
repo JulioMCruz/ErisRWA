@@ -17,6 +17,7 @@ import BrandKit from './components/BrandKit';
 import Privacy from './pages/legal/Privacy';
 import Terms from './pages/legal/Terms';
 import Compliance from './pages/legal/Compliance';
+import Contact from './pages/Contact';
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/compliance" element={<Compliance />} />
+            <Route path="/contact" element={<Contact />} />
             <Route
               path="/dashboard"
               element={
